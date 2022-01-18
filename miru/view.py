@@ -296,19 +296,14 @@ class View:
         else:
             predicate = lambda e: isinstance(e.interaction, hikari.ComponentInteraction)
 
-        while True:
-            try:
-                event = await self.app.wait_for(
-                    hikari.InteractionCreateEvent,
-                    timeout=self.timeout,
-                    predicate=predicate,
-                )
-            except asyncio.TimeoutError:
-                # Handle timeouts, stop listening
-                await self._handle_timeout()
-
-            else:
+        with self.app.stream(hikari.InteractionCreateEvent, timeout=self.timeout) as stream:
+            async for event in stream:
+                if not predicate(event):
+                    continue
                 await self._process_interactions(event)
+
+        # Handle timeouts, stop listening
+        await self._handle_timeout()
 
     async def _handle_timeout(self) -> None:
         """
