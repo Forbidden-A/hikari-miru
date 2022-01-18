@@ -296,10 +296,8 @@ class View:
         else:
             predicate = lambda e: isinstance(e.interaction, hikari.ComponentInteraction)
 
-        with self.app.stream(hikari.InteractionCreateEvent, timeout=self.timeout) as stream:
+        with self.app.stream(hikari.InteractionCreateEvent, timeout=self.timeout).filter(predicate) as stream:
             async for event in stream:
-                if not predicate(event):
-                    continue
                 await self._process_interactions(event)
 
         # Handle timeouts, stop listening
